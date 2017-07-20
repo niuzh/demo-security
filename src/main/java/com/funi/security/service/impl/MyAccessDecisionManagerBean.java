@@ -1,7 +1,11 @@
 package com.funi.security.service.impl;
 
-import com.funi.security.mbg.dto.Resource;
+import com.funi.security.mbg.dao.AuthorityMapper;
+import com.funi.security.mbg.dao.AuthorityResourceRelMapper;
+import com.funi.security.mbg.dao.ResourceMapper;
+import com.funi.security.mbg.dto.*;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDecisionManager;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.ConfigAttribute;
@@ -16,18 +20,36 @@ import java.util.*;
  * @author zhihuan.niu on 7/20/17.
  */
 public class MyAccessDecisionManagerBean implements AccessDecisionManager, InitializingBean {
+    @Autowired
+    private AuthorityMapper authorityMapper;
+    @Autowired
+    private AuthorityResourceRelMapper authorityResourceRelMapper;
+    @Autowired
+    private ResourceMapper resourceMapper;
     //权限-资源
     private static Map<Resource, List<String>> resourceMap = new HashMap<Resource, List<String>>();
 
     public void afterPropertiesSet() {
-        Resource resource = new Resource();
-        resource.setId("1");
-        resource.setResourceName("首页");
-        resource.setResource("/");
-        List<String> authorityKey = new ArrayList<String>();
-        authorityKey.add("Index");
-        resourceMap.put(resource, authorityKey);
-
+        List<Resource> resourceList=resourceMapper.selectByExample(new ResourceExample());
+        List<Authority> authorityList=authorityMapper.selectByExample(new AuthorityExample());
+        List<AuthorityResourceRel> authorityResourceRelList=authorityResourceRelMapper.selectByExample(new AuthorityResourceRelExample());
+        for (Resource resource:resourceList){
+            if(resource.getIsDeleted())continue;
+            List<String> authorityKey = new ArrayList<String>();
+            for (AuthorityResourceRel authorityResourceRel:authorityResourceRelList){
+                if(authorityResourceRel.getIsDeleted())continue;
+                if(authorityResourceRel.getResourceId().equals(resource.getId())){
+                    for (Authority authority:authorityList){
+                        if(authority.getIsDeleted())continue;
+                        if(authorityResourceRel.getAuthorityId().equals(authority.getId())){
+                            authorityKey.add(authority.getKeyValue());
+                            break;
+                        }
+                    }
+                }
+            }
+            resourceMap.put(resource, authorityKey);
+        }
     }
 
     @Override
