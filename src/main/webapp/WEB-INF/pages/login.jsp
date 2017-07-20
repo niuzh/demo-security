@@ -4,10 +4,9 @@
 <body>
 <c:url value="/j-spring-security-check" var="loginUrl"/>
 <form action="${loginUrl}" method="post">
-    <c:if test="${param.error != null}">
-
+    <c:if test="${param.error == 'failure'}">
         <p>
-            Invalid username and password.
+            用户名或秘密错误
         </p>
     </c:if>
     <c:if test="${param.logout != null}">
