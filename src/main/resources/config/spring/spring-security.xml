@@ -7,18 +7,45 @@
              http://www.springframework.org/schema/beans/spring-beans.xsd
         http://www.springframework.org/schema/security
         http://www.springframework.org/schema/security/spring-security.xsd">
-
-    <http>
+    <!--以下路径的请求都是被允许的-->
+    <http pattern="/css/**" security="none"/>
+    <http pattern="/js/**" security="none"/>
+    <http pattern="/loginUrl" security="none"/>
+    <http pattern="/logOut" security="none"/>
+    <http access-decision-manager-ref="myAccessDecisionManagerBean">
         <intercept-url pattern="/**" access="authenticated"/>
-        <form-login />
-        <http-basic />
+        <form-login login-page='/loginUrl' login-processing-url="/j-spring-security-check" default-target-url='/' authentication-failure-url="/loginUrl?error=failure"/>
+        <http-basic/>
+        <logout logout-url="/logOut" logout-success-url="/loginUrl?error=logOut" delete-cookies="JSESSIONID"/>
+        <!--session控制-->
+        <session-management>
+            <concurrency-control max-sessions="1"/>
+        </session-management>
+        <!--防止CSRF攻击-->
+        <csrf disabled="true"/>
+        <access-denied-handler error-page="/denied"/>
     </http>
-    <authentication-manager>
-        <authentication-provider>
+
+    <!--验证服务管理器-->
+    <authentication-manager alias="authenticationManager">
+        <!--可以有多个 <authentication-provider>元素来定义不同的验证源，将会按顺序进行调用。-->
+        <!--<authentication-provider>
             <user-service>
-                <user name="admin" password="admin" authorities="ROLE_USER, ROLE_ADMIN" />
-                <user name="bob" password="bobspassword" authorities="ROLE_USER" />
+                <user name="admin" password="admin" authorities="ROLE_USER, ROLE_ADMIN"/>
+                <user name="bob" password="bobspassword" authorities="ROLE_USER"/>
             </user-service>
-        </authentication-provider>
+        </authentication-provider>-->
+
+        <authentication-provider user-service-ref='myUserDetailsService'/>
+
     </authentication-manager>
+
+    <beans:bean id="myUserDetailsService"
+                class="com.funi.security.service.impl.MyUserDetailsManager">
+    </beans:bean>
+    <!--密码编码器-->
+    <beans:bean name="bcryptEncoder"
+                class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder"/>
+
+    <beans:bean id="myAccessDecisionManagerBean" class="com.funi.security.service.impl.MyAccessDecisionManagerBean"/>
 </beans:beans>

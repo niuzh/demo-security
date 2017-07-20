@@ -73,6 +73,13 @@
         <url-pattern>/*</url-pattern>
     </filter-mapping>
 
+    <!--监听器来保证session生命周期事件发生时Spring Security被更新-->
+    <listener>
+        <listener-class>
+            org.springframework.security.web.session.HttpSessionEventPublisher
+        </listener-class>
+    </listener>
+
     <welcome-file-list>
         <welcome-file>/login</welcome-file>
     </welcome-file-list>
