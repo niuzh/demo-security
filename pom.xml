@@ -104,11 +104,6 @@
             <artifactId>spring-security-cas</artifactId>
             <version>4.1.0.RELEASE</version>
         </dependency>
-        <dependency>
-            <groupId>org.springframework.security</groupId>
-            <artifactId>spring-security-remoting</artifactId>
-            <version>4.1.0.RELEASE</version>
-        </dependency>
     </dependencies>
     <build>
         <finalName>funi-demo-security</finalName>
