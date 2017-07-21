@@ -51,7 +51,7 @@ public class MyUserDetailsManager implements UserDetailsService {
     private Collection<? extends GrantedAuthority> authorities(com.funi.security.mbg.dto.User user){
         List<SimpleGrantedAuthority> list=new ArrayList<SimpleGrantedAuthority>();
         List<Authority> authorityList=new ArrayList<Authority>();
-        if(user.getIsAdmin()){
+        if(user.getIsAdmin()!=null&&user.getIsAdmin()){
             AuthorityExample authorityExample=new AuthorityExample();
             authorityExample.createCriteria().andIsDeletedEqualTo(false);
             authorityList=authorityMapper.selectByExample(authorityExample);

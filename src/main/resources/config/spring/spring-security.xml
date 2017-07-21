@@ -12,37 +12,72 @@
     <http pattern="/js/**" security="none"/>
     <http pattern="/loginUrl" security="none"/>
     <http pattern="/logOut" security="none"/>
-    <http access-decision-manager-ref="myAccessDecisionManagerBean">
-        <intercept-url pattern="/**" access="authenticated"/>
-        <form-login login-page='/loginUrl' login-processing-url="/j-spring-security-check" default-target-url='/' authentication-failure-url="/loginUrl?error=failure"/>
-        <http-basic/>
-        <logout logout-url="/logOut" logout-success-url="/loginUrl?error=logOut" delete-cookies="JSESSIONID"/>
-        <!--session控制-->
-        <session-management>
-            <concurrency-control max-sessions="1"/>
-        </session-management>
-        <!--防止CSRF攻击-->
-        <csrf disabled="true"/>
-        <access-denied-handler error-page="/denied"/>
+    <!-- 设置相应的切入点与 filter,auto-config="false" 不使用 http 的自动配置   -->
+    <http auto-config="false" use-expressions="false" disable-url-rewriting="false" access-decision-manager-ref="myAccessDecisionManagerBean"
+          entry-point-ref="casProcessingFilterEntryPoint">
+        <headers disabled="true"/>
+        <csrf disabled="false"/>
+        <intercept-url pattern="/**" access="hasAuthority"/>
+
+        <custom-filter ref="casAuthenticationFilter" position="CAS_FILTER"/>
+        <logout logout-success-url="/login"/>
+        <custom-filter ref="requestSingleLogoutFilter" before="LOGOUT_FILTER"/>
+        <custom-filter ref="singleLogoutFilter" before="CAS_FILTER"/>
     </http>
+
+    <!-- cas切入点,被“entry-point-ref”所引用 -->
+    <beans:bean id="casProcessingFilterEntryPoint" class="org.springframework.security.cas.web.CasAuthenticationEntryPoint">
+        <beans:property name="loginUrl" value="http://localhost:8080/cas/login"/>
+        <beans:property name="serviceProperties" ref="serviceProperties"/>
+    </beans:bean>
+
+    <!-- This filter handles a Single Logout Request from the CAS Server -->
+    <beans:bean id="singleLogoutFilter" class="org.jasig.cas.client.session.SingleSignOutFilter"/>
+
+    <!-- This filter redirects to the CAS Server to signal Single Logout should be performed -->
+    <beans:bean id="requestSingleLogoutFilter" class="org.springframework.security.web.authentication.logout.LogoutFilter" >
+        <beans:constructor-arg value="http://localhost:8080/cas/logout?service=http://localhost:8081/security/index" />
+        <beans:constructor-arg>
+            <beans:bean class="org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler" />
+        </beans:constructor-arg>
+        <beans:property name="filterProcessesUrl" value="/j_spring_cas_security_logout" />
+    </beans:bean>
+
+    <beans:bean id="casAuthenticationFilter" class="org.springframework.security.cas.web.CasAuthenticationFilter">
+        <beans:property name="authenticationManager" ref="authenticationManager"/>
+    </beans:bean>
 
     <!--验证服务管理器-->
     <authentication-manager alias="authenticationManager">
-        <!--可以有多个 <authentication-provider>元素来定义不同的验证源，将会按顺序进行调用。-->
-        <!--<authentication-provider>
-            <user-service>
-                <user name="admin" password="admin" authorities="ROLE_USER, ROLE_ADMIN"/>
-                <user name="bob" password="bobspassword" authorities="ROLE_USER"/>
-            </user-service>
-        </authentication-provider>-->
-
-        <authentication-provider user-service-ref='myUserDetailsService'/>
-
+        <authentication-provider ref='casAuthenticationProvider'/>
     </authentication-manager>
 
-    <beans:bean id="myUserDetailsService"
-                class="com.funi.security.service.impl.MyUserDetailsManager">
+    <beans:bean id="casAuthenticationProvider"
+          class="org.springframework.security.cas.authentication.CasAuthenticationProvider">
+        <beans:property name="authenticationUserDetailsService">
+            <beans:bean class="org.springframework.security.core.userdetails.UserDetailsByNameServiceWrapper">
+                <beans:constructor-arg ref="userDetailsManager" />
+            </beans:bean>
+        </beans:property>
+        <beans:property name="serviceProperties" ref="serviceProperties"/>
+        <beans:property name="ticketValidator">
+            <beans:bean class="org.jasig.cas.client.validation.Cas20ServiceTicketValidator">
+                <beans:constructor-arg index="0" value="http://localhost:8080/cas"/>
+            </beans:bean>
+        </beans:property>
+        <beans:property name="key" value="an_id_for_this_auth_provider_only"/>
     </beans:bean>
+
+    <!-- serviceProperties 为认证成功后服务端返回的地址 . 该地址将作为参数传递到服务端 , 此处不能写为 IP
+           的形式。需写为主机名 ( 证书生成时写的计算机全名 ) 或域名 -->
+    <beans:bean id="serviceProperties" class="org.springframework.security.cas.ServiceProperties">
+        <beans:property name="service" value="http://localhost:8081/security/j_spring_cas_security_check"/>
+        <!-- sendRenew 为 boolean 类型 当为 true 时每新打开窗口则需重新登录 -->
+        <beans:property name="sendRenew" value="false"/>
+    </beans:bean>
+
+    <beans:bean id="userDetailsManager" class="com.funi.security.service.impl.MyUserDetailsManager"/>
+
     <!--密码编码器-->
     <beans:bean name="bcryptEncoder"
                 class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder"/>
