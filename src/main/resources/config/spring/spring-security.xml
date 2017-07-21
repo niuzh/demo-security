@@ -23,6 +23,7 @@
         <logout logout-success-url="/login"/>
         <custom-filter ref="requestSingleLogoutFilter" before="LOGOUT_FILTER"/>
         <custom-filter ref="singleLogoutFilter" before="CAS_FILTER"/>
+        <access-denied-handler error-page="/denied"/>
     </http>
 
     <!-- cas切入点,被“entry-point-ref”所引用 -->

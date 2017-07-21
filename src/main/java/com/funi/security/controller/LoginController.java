@@ -10,11 +10,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 @Controller
 public class LoginController {
 
-    @RequestMapping("/loginUrl")
-    public String login(){
-        return "login";
-    }
-
     @RequestMapping("/")
     public String index(){
         return "index";
