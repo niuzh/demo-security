@@ -7,7 +7,7 @@
 <%@page import="org.springframework.security.cas.authentication.CasAuthenticationToken" %>
 
 <%@page  import="org.springframework.security.core.userdetails.User" %>
-
+<h3>当前页面:${view}</h3>
 <%
     if(request.getUserPrincipal()==null){
         return;
