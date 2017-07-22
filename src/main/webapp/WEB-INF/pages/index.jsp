@@ -7,6 +7,7 @@
 <%@page import="org.springframework.security.cas.authentication.CasAuthenticationToken" %>
 
 <%@page  import="org.springframework.security.core.userdetails.User" %>
+<%@ page import="org.springframework.security.core.GrantedAuthority" %>
 <h3>当前页面:${view}</h3>
 <%
     if(request.getUserPrincipal()==null){
@@ -15,6 +16,10 @@
     User principal = (User)((CasAuthenticationToken) request.getUserPrincipal()).getPrincipal();
     String loginName = principal.getUsername();
     out.println("loginName:  "+loginName);
+    out.println("权限");
+    for (GrantedAuthority authority:principal.getAuthorities()){
+        out.println(",  "+authority.getAuthority());
+    }
 %>
 </body>
 </html>
