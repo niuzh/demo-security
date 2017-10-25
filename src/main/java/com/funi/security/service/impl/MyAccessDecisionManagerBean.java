@@ -67,7 +67,7 @@ public class MyAccessDecisionManagerBean implements AccessDecisionManager, Initi
         }
         throw new AccessDeniedException("Access is denied");
     }
-
+    //提取请求对应的权限
     private Set<String> findAuthorityKeyValue(FilterInvocation filterInvocation) {
         Set<String> set = new HashSet<String>();
         for (Map.Entry<Resource, List<String>> entry : resourceMap.entrySet()) {
